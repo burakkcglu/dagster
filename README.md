@@ -38,13 +38,22 @@ There are 8 containers in total:
 
 ## Project Structure
 
-- `src/demo_pipeline/assets/` : asset definitions (extract, transform, load)
-- `src/demo_pipeline/checks.py` : asset checks
-- `src/demo_pipeline/definitions.py` : Dagster `Definitions`, job, schedule, resources
-- `src/demo_pipeline/resources.py` : PostgreSQL and Elasticsearch resources
-- `docker-compose.yml` : all services
-- `dagster.yaml` : Dagster instance config
-- `workspace.yaml` : code location config
+.
+├── src/
+│   └── demo_pipeline/
+│       ├── assets/               # Data processing components
+│       │   ├── extract.py        # Ingestion from NYC Open Data
+│       │   ├── transform.py      # Pandas cleaning & aggregation
+│       │   └── load.py           # IO to Postgres & Elasticsearch
+│       ├── checks.py             # Asset Data Quality checks
+│       ├── definitions.py        # Entry point: registers assets & resources
+│       └── resources.py          # Database & search engine connections
+├── dagster.yaml                  # Dagster instance & storage settings
+├── workspace.yaml                # Code location definitions
+├── docker-compose.yml            # Multi-container orchestration
+├── Dockerfile_dagster            # Webserver & Daemon image
+├── Dockerfile_user_code          # Pipeline execution environment
+├── requirements.txt              # Python dependencies
 
 ## Prerequisites
 
