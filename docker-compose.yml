@@ -1,5 +1,5 @@
 services:
-  # ========== DAGSTER METADATA DB ==========
+  # DAGSTER METADATA DB 
   dagster_postgres:
     image: postgres:16
     container_name: dagster_postgres
@@ -15,7 +15,7 @@ services:
       timeout: 8s
       retries: 5
 
-  # ========== APPLICATION WAREHOUSE ==========
+  # APPLICATION WAREHOUSE 
   app_postgres:
     image: postgres:16
     container_name: app_postgres
@@ -47,7 +47,7 @@ services:
     depends_on:
       - app_postgres
 
-  # ========== ELASTICSEARCH + KIBANA ==========
+  # ELASTICSEARCH + KIBANA
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     container_name: elasticsearch
@@ -78,7 +78,7 @@ services:
       elasticsearch:
         condition: service_healthy
 
-  # ========== DAGSTER USER CODE (gRPC) ==========
+  # DAGSTER USER CODE (gRPC)
   user_code:
     build:
       context: .
@@ -100,8 +100,7 @@ services:
     networks:
       - demo_net
 
-  # ========== DAGSTER WEBSERVER (UI) ==========
-  # ========== DAGSTER WEBSERVER (UI) ==========
+  # DAGSTER WEBSERVER
   webserver:
     build:
       context: .
@@ -132,9 +131,8 @@ services:
       user_code:
         condition: service_started
 
-  # ========== DAGSTER DAEMON ==========
-  # ========== DAGSTER DAEMON ==========
-  # ========== DAGSTER DAEMON ==========
+
+  # DAGSTER DAEMON
   daemon:
     build:
       context: .

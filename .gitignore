@@ -1,15 +1,15 @@
-# Python çöpleri
+
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Sanal ortam
+
 venv/
 .venv/
 env/
 
-# Mac sistem dosyaları
+
 .DS_Store
 
-# Dagster yerel test dosyaları (varsa)
+
 *.db

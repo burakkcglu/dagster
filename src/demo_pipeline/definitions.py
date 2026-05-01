@@ -7,7 +7,6 @@ from .resources import PostgresResource, ElasticsearchResource
 # Load all assets from the 3 modules
 all_assets = load_assets_from_modules([extract, transform, load])
 
-# Define the Job and Schedule as mentioned in Slide 8
 taxi_job = define_asset_job("taxi_etl_job", selection="*")
 
 taxi_schedule = ScheduleDefinition(

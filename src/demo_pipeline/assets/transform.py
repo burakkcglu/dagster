@@ -9,7 +9,6 @@ def cleaned_taxi_data(raw_taxi_data: pd.DataFrame) -> pd.DataFrame:
     df = df[df['fare_amount'] > 0]
     df['pickup_hour'] = df['tpep_pickup_datetime'].dt.floor('H')
     
-    # Calculate tip percentage as mentioned in the presentation
     if 'tip_amount' in df.columns:
         df['tip_pct'] = (df['tip_amount'] / df['fare_amount']).fillna(0)
     
