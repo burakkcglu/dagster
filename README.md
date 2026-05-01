@@ -37,7 +37,7 @@ There are 8 containers in total:
 8. `daemon`
 
 ## Project Structure
-
+```bash
 .
 ├── src/
 │   └── demo_pipeline/
@@ -54,7 +54,8 @@ There are 8 containers in total:
 ├── Dockerfile_dagster            # Webserver & Daemon image
 ├── Dockerfile_user_code          # Pipeline execution environment
 ├── requirements.txt              # Python dependencies
-
+└── .env.example                  # Template for environment variables
+```
 ## Prerequisites
 
 1. Docker Desktop installed and running
