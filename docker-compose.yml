@@ -1,0 +1,173 @@
+services:
+  # ========== DAGSTER METADATA DB ==========
+  dagster_postgres:
+    image: postgres:16
+    container_name: dagster_postgres
+    environment:
+      POSTGRES_USER: dagster
+      POSTGRES_PASSWORD: dagster
+      POSTGRES_DB: dagster
+    networks:
+      - demo_net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U dagster -d dagster" ]
+      interval: 10s
+      timeout: 8s
+      retries: 5
+
+  # ========== APPLICATION WAREHOUSE ==========
+  app_postgres:
+    image: postgres:16
+    container_name: app_postgres
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: warehouse
+    ports:
+      - "5433:5432"
+    networks:
+      - demo_net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U app -d warehouse" ]
+      interval: 10s
+      timeout: 8s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@demo.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    networks:
+      - demo_net
+    depends_on:
+      - app_postgres
+
+  # ========== ELASTICSEARCH + KIBANA ==========
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    networks:
+      - demo_net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - demo_net
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # ========== DAGSTER USER CODE (gRPC) ==========
+  user_code:
+    build:
+      context: .
+      dockerfile: Dockerfile_user_code
+    image: demo_user_code_image
+    container_name: user_code
+    environment:
+      DAGSTER_CURRENT_IMAGE: "demo_user_code_image"
+      DAGSTER_POSTGRES_HOST: dagster_postgres
+      DAGSTER_POSTGRES_USER: dagster
+      DAGSTER_POSTGRES_PASSWORD: dagster
+      DAGSTER_POSTGRES_DB: dagster
+      APP_PG_HOST: app_postgres
+      APP_PG_PORT: "5432"
+      APP_PG_USER: app
+      APP_PG_PASSWORD: app
+      APP_PG_DB: warehouse
+      ES_HOST: http://elasticsearch:9200
+    networks:
+      - demo_net
+
+  # ========== DAGSTER WEBSERVER (UI) ==========
+  # ========== DAGSTER WEBSERVER (UI) ==========
+  webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile_dagster
+    container_name: dagster_webserver
+    entrypoint: [ "python", "-m", "dagster_webserver", "-h", "0.0.0.0", "-p", "3000", "-w", "workspace.yaml" ]
+    ports:
+      - "3000:3000"
+    environment:
+      DAGSTER_POSTGRES_HOST: dagster_postgres
+      DAGSTER_POSTGRES_USER: dagster
+      DAGSTER_POSTGRES_PASSWORD: dagster
+      DAGSTER_POSTGRES_DB: dagster
+      APP_PG_HOST: app_postgres
+      APP_PG_PORT: "5432"
+      APP_PG_USER: app
+      APP_PG_PASSWORD: app
+      APP_PG_DB: warehouse
+      ES_HOST: http://elasticsearch:9200
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dagster_io_storage:/tmp/io_manager_storage
+    networks:
+      - demo_net
+    depends_on:
+      dagster_postgres:
+        condition: service_healthy
+      user_code:
+        condition: service_started
+
+  # ========== DAGSTER DAEMON ==========
+  # ========== DAGSTER DAEMON ==========
+  # ========== DAGSTER DAEMON ==========
+  daemon:
+    build:
+      context: .
+      dockerfile: Dockerfile_dagster
+    container_name: dagster_daemon
+    entrypoint: [ "dagster-daemon", "run" ]
+    restart: on-failure
+    environment:
+      DAGSTER_POSTGRES_HOST: dagster_postgres
+      DAGSTER_POSTGRES_USER: dagster
+      DAGSTER_POSTGRES_PASSWORD: dagster
+      DAGSTER_POSTGRES_DB: dagster
+      APP_PG_HOST: app_postgres
+      APP_PG_PORT: "5432"
+      APP_PG_USER: app
+      APP_PG_PASSWORD: app
+      APP_PG_DB: warehouse
+      ES_HOST: http://elasticsearch:9200
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dagster_io_storage:/tmp/io_manager_storage
+    networks:
+      - demo_net
+    depends_on:
+      dagster_postgres:
+        condition: service_healthy
+      user_code:
+        condition: service_started
+
+networks:
+  demo_net:
+    driver: bridge
+    name: demo_net
+
+volumes:
+  dagster_io_storage:
